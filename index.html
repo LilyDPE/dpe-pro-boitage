@@ -1,0 +1,1092 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DPE Pro - Module Boîtage</title>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #04264b 0%, #0a3d7a 100%);
+            min-height: 100vh;
+        }
+        
+        .app-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header h1 {
+            color: #04264b;
+            font-size: 24px;
+        }
+        
+        .header .logo {
+            color: #95c122;
+            font-weight: bold;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .user-badge {
+            background: #04264b;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+        
+        .logout-btn {
+            background: #c7c7c7;
+            color: #04264b;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .logout-btn:hover {
+            background: #b0b0b0;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 20px;
+        }
+        
+        .sidebar {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            max-height: calc(100vh - 140px);
+            overflow-y: auto;
+        }
+        
+        .map-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            overflow: hidden;
+            height: calc(100vh - 140px);
+        }
+        
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .section-title {
+            color: #04264b;
+            font-size: 18px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #95c122;
+        }
+        
+        .mode-selection {
+            display: grid;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .mode-btn {
+            background: #f5f5f5;
+            border: 2px solid #e0e0e0;
+            padding: 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: left;
+        }
+        
+        .mode-btn:hover {
+            background: #e8f5e9;
+            border-color: #95c122;
+        }
+        
+        .mode-btn.active {
+            background: #95c122;
+            border-color: #04264b;
+            color: white;
+        }
+        
+        .mode-btn .mode-icon {
+            font-size: 24px;
+            margin-right: 10px;
+        }
+        
+        .mode-btn .mode-title {
+            font-weight: bold;
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+        
+        .mode-btn .mode-desc {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            color: #04264b;
+            font-weight: 500;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+        
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: #95c122;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #7ea01a;
+        }
+        
+        .btn-secondary {
+            background: #04264b;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #032040;
+        }
+        
+        .btn:disabled {
+            background: #c7c7c7;
+            cursor: not-allowed;
+        }
+        
+        .circuit-list {
+            margin-top: 20px;
+        }
+        
+        .street-item {
+            background: #f9f9f9;
+            padding: 12px;
+            margin-bottom: 8px;
+            border-radius: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 3px solid #95c122;
+        }
+        
+        .street-item.completed {
+            background: #e8f5e9;
+            opacity: 0.6;
+        }
+        
+        .street-info {
+            flex: 1;
+        }
+        
+        .street-name {
+            font-weight: 500;
+            color: #04264b;
+            margin-bottom: 3px;
+        }
+        
+        .street-meta {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .check-btn {
+            background: #95c122;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        .check-btn:hover {
+            background: #7ea01a;
+        }
+        
+        .street-item.completed .check-btn {
+            background: #c7c7c7;
+        }
+        
+        .progress-bar {
+            background: #e0e0e0;
+            height: 30px;
+            border-radius: 15px;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+        
+        .progress-fill {
+            background: linear-gradient(90deg, #95c122 0%, #7ea01a 100%);
+            height: 100%;
+            transition: width 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin: 15px 0;
+        }
+        
+        .stat-card {
+            background: #f9f9f9;
+            padding: 12px;
+            border-radius: 6px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #04264b;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        .login-screen {
+            max-width: 400px;
+            margin: 100px auto;
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .login-screen h2 {
+            color: #04264b;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+        
+        .error-message {
+            background: #ffebee;
+            color: #c62828;
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+        
+        .success-message {
+            background: #e8f5e9;
+            color: #2e7d32;
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+        
+        .dpe-marker {
+            background: #ff5722;
+            color: white;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 12px;
+            border: 2px solid white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .sidebar {
+                max-height: none;
+            }
+            
+            .map-container {
+                height: 400px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- LOGIN SCREEN -->
+    <div id="loginScreen" class="login-screen">
+        <h2>🏠 DPE Pro - Boîtage</h2>
+        <p style="text-align: center; color: #666; margin-bottom: 20px;">Mode démo - Sélectionnez votre profil</p>
+        <div id="loginError" class="error-message hidden"></div>
+        <form id="loginForm">
+            <div class="form-group">
+                <label>Sélectionner un utilisateur</label>
+                <select id="userSelect" required>
+                    <option value="">-- Choisir --</option>
+                    <option value="aurelie@2aimmobilier.fr">Aurélie Guilmeau (Admin)</option>
+                    <option value="commercial1@2aimmobilier.fr">Marie Dupont (Commercial)</option>
+                    <option value="commercial2@2aimmobilier.fr">Thomas Martin (Commercial)</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary">Accéder</button>
+        </form>
+    </div>
+
+    <!-- MAIN APP -->
+    <div id="mainApp" class="app-container hidden">
+        <div class="header">
+            <h1>🏠 <span class="logo">DPE Pro</span> - Module Boîtage</h1>
+            <div class="user-info">
+                <div class="user-badge" id="userBadge"></div>
+                <button class="logout-btn" id="logoutBtn">Déconnexion</button>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <!-- SIDEBAR -->
+            <div class="sidebar">
+                <!-- MODE SELECTION -->
+                <div id="modeSection">
+                    <h3 class="section-title">Créer une zone</h3>
+                    <div class="mode-selection">
+                        <div class="mode-btn" data-mode="manual">
+                            <div class="mode-icon">🗺️</div>
+                            <div class="mode-title">Manuel</div>
+                            <div class="mode-desc">Dessiner une zone sur la carte</div>
+                        </div>
+                        <div class="mode-btn" data-mode="city">
+                            <div class="mode-icon">🏙️</div>
+                            <div class="mode-title">Ville</div>
+                            <div class="mode-desc">Sélectionner une ville entière</div>
+                        </div>
+                        <div class="mode-btn" data-mode="auto">
+                            <div class="mode-icon">⚡</div>
+                            <div class="mode-title">J'ai 1h</div>
+                            <div class="mode-desc">Zone optimisée automatiquement</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CITY MODE FORM -->
+                <div id="cityForm" class="hidden">
+                    <div class="form-group">
+                        <label>Nom de la ville</label>
+                        <input type="text" id="cityName" placeholder="Ex: Dieppe">
+                    </div>
+                    <div class="form-group">
+                        <label>Code postal (optionnel)</label>
+                        <input type="text" id="cityPostal" placeholder="Ex: 76200">
+                    </div>
+                    <button class="btn btn-primary" id="searchCityBtn">Rechercher la ville</button>
+                    <button class="btn btn-secondary" id="cancelCityBtn" style="margin-top: 10px;">Annuler</button>
+                </div>
+
+                <!-- AUTO MODE FORM -->
+                <div id="autoForm" class="hidden">
+                    <div class="form-group">
+                        <label>Durée disponible</label>
+                        <select id="autoDuration">
+                            <option value="60">1 heure</option>
+                            <option value="120">2 heures</option>
+                            <option value="180">3 heures</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary" id="generateAutoZoneBtn">Générer la zone</button>
+                    <button class="btn btn-secondary" id="cancelAutoBtn" style="margin-top: 10px;">Annuler</button>
+                </div>
+
+                <!-- ZONE NAME FORM -->
+                <div id="zoneNameForm" class="hidden">
+                    <div class="form-group">
+                        <label>Nom de la zone</label>
+                        <input type="text" id="zoneName" placeholder="Ex: Centre-ville Dieppe">
+                    </div>
+                    <button class="btn btn-primary" id="saveZoneBtn">Générer le circuit</button>
+                    <button class="btn btn-secondary" id="cancelZoneBtn" style="margin-top: 10px;">Annuler</button>
+                    <div id="zoneStatus" class="loading hidden">Génération du circuit...</div>
+                </div>
+
+                <!-- CIRCUIT EXECUTION -->
+                <div id="circuitSection" class="hidden">
+                    <h3 class="section-title">Circuit en cours</h3>
+                    
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-value" id="statTotal">0</div>
+                            <div class="stat-label">Rues total</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="statCompleted">0</div>
+                            <div class="stat-label">Complétées</div>
+                        </div>
+                    </div>
+                    
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill" style="width: 0%">0%</div>
+                    </div>
+                    
+                    <div class="circuit-list" id="circuitList"></div>
+                    
+                    <button class="btn btn-secondary" id="finishSessionBtn" style="margin-top: 20px;">Terminer la session</button>
+                </div>
+
+                <!-- ZONES LIST -->
+                <div id="zonesListSection" class="hidden">
+                    <h3 class="section-title">Mes zones</h3>
+                    <div id="zonesList"></div>
+                    <button class="btn btn-primary" id="newZoneBtn" style="margin-top: 15px;">Créer une nouvelle zone</button>
+                </div>
+            </div>
+
+            <!-- MAP -->
+            <div class="map-container">
+                <div id="map"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
+    
+    <!-- Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <script>
+        // SUPABASE CONFIG
+        const SUPABASE_URL = 'https://xuxwzvwesyscuwwwuzzl.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh1eHd6dndlc3lzY3V3d3d1enpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4NDI3MTYsImV4cCI6MjA5MjQxODcxNn0.cDvYVH-Lan_gPmt054Ig1IoJICC4Qbf4sLHxto9K1w4';
+        
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        // GLOBAL STATE
+        let map;
+        let currentUser = null;
+        let currentMode = null;
+        let currentZone = null;
+        let currentSession = null;
+        let drawnItems = new L.FeatureGroup();
+        let streetsLayer = new L.FeatureGroup();
+        let dpeLayer = new L.FeatureGroup();
+        
+        // INIT
+        document.addEventListener('DOMContentLoaded', () => {
+            initMap();
+            checkAuth();
+            setupEventListeners();
+        });
+        
+        // INIT MAP
+        function initMap() {
+            map = L.map('map').setView([49.9, 1.1], 10);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+            
+            map.addLayer(drawnItems);
+            map.addLayer(streetsLayer);
+            map.addLayer(dpeLayer);
+            
+            // Drawing controls for manual mode
+            const drawControl = new L.Control.Draw({
+                draw: {
+                    polygon: {
+                        allowIntersection: false,
+                        showArea: true
+                    },
+                    polyline: false,
+                    rectangle: false,
+                    circle: false,
+                    marker: false,
+                    circlemarker: false
+                },
+                edit: {
+                    featureGroup: drawnItems,
+                    remove: true
+                }
+            });
+            
+            window.drawControl = drawControl;
+            
+            map.on(L.Draw.Event.CREATED, (e) => {
+                drawnItems.clearLayers();
+                drawnItems.addLayer(e.layer);
+                showZoneNameForm();
+            });
+        }
+        
+        // CHECK AUTH
+        async function checkAuth() {
+            // Demo mode - no auto-login
+            // User must select profile manually
+        }
+        
+        // SETUP EVENT LISTENERS
+        function setupEventListeners() {
+            // Login
+            document.getElementById('loginForm').addEventListener('submit', handleLogin);
+            document.getElementById('logoutBtn').addEventListener('click', handleLogout);
+            
+            // Mode selection
+            document.querySelectorAll('.mode-btn').forEach(btn => {
+                btn.addEventListener('click', () => selectMode(btn.dataset.mode));
+            });
+            
+            // City mode
+            document.getElementById('searchCityBtn').addEventListener('click', searchCity);
+            document.getElementById('cancelCityBtn').addEventListener('click', resetMode);
+            
+            // Auto mode
+            document.getElementById('generateAutoZoneBtn').addEventListener('click', generateAutoZone);
+            document.getElementById('cancelAutoBtn').addEventListener('click', resetMode);
+            
+            // Zone name
+            document.getElementById('saveZoneBtn').addEventListener('click', saveZone);
+            document.getElementById('cancelZoneBtn').addEventListener('click', resetMode);
+            
+            // Session
+            document.getElementById('finishSessionBtn').addEventListener('click', finishSession);
+            document.getElementById('newZoneBtn').addEventListener('click', resetMode);
+        }
+        
+        // LOGIN
+        async function handleLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('userSelect').value;
+            
+            if (!email) {
+                showError('loginError', 'Veuillez sélectionner un utilisateur');
+                return;
+            }
+            
+            try {
+                // Get user profile directly (no auth in demo mode)
+                const { data: profile, error } = await supabaseClient
+                    .from('profiles')
+                    .select('*')
+                    .eq('email', email)
+                    .single();
+                
+                if (error) throw error;
+                
+                currentUser = profile;
+                showMainApp();
+            } catch (error) {
+                console.error(error);
+                showError('loginError', 'Erreur lors de la connexion');
+            }
+        }
+        
+        // LOGOUT
+        async function handleLogout() {
+            currentUser = null;
+            currentSession = null;
+            currentZone = null;
+            resetMode();
+            document.getElementById('mainApp').classList.add('hidden');
+            document.getElementById('loginScreen').classList.remove('hidden');
+        }
+        
+        // SHOW MAIN APP
+        function showMainApp() {
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('mainApp').classList.remove('hidden');
+            document.getElementById('userBadge').textContent = 
+                `${currentUser.prenom} ${currentUser.nom} (${currentUser.role})`;
+            
+            loadUserZones();
+        }
+        
+        // SELECT MODE
+        function selectMode(mode) {
+            currentMode = mode;
+            
+            // Reset UI
+            document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.closest('.mode-btn').classList.add('active');
+            
+            document.getElementById('cityForm').classList.add('hidden');
+            document.getElementById('autoForm').classList.add('hidden');
+            document.getElementById('zoneNameForm').classList.add('hidden');
+            
+            // Remove draw control
+            if (map.hasLayer(window.drawControl)) {
+                map.removeControl(window.drawControl);
+            }
+            
+            drawnItems.clearLayers();
+            
+            if (mode === 'manual') {
+                map.addControl(window.drawControl);
+            } else if (mode === 'city') {
+                document.getElementById('cityForm').classList.remove('hidden');
+            } else if (mode === 'auto') {
+                document.getElementById('autoForm').classList.remove('hidden');
+            }
+        }
+        
+        // SEARCH CITY
+        async function searchCity() {
+            const cityName = document.getElementById('cityName').value;
+            const postalCode = document.getElementById('cityPostal').value;
+            
+            if (!cityName) {
+                alert('Veuillez saisir un nom de ville');
+                return;
+            }
+            
+            try {
+                const query = postalCode ? `${cityName} ${postalCode}` : cityName;
+                const response = await fetch(
+                    `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&polygon_geojson=1&countrycodes=fr`
+                );
+                const data = await response.json();
+                
+                if (data.length > 0 && data[0].geojson) {
+                    const geojson = data[0].geojson;
+                    const layer = L.geoJSON(geojson);
+                    drawnItems.clearLayers();
+                    drawnItems.addLayer(layer);
+                    map.fitBounds(layer.getBounds());
+                    showZoneNameForm();
+                } else {
+                    alert('Ville non trouvée');
+                }
+            } catch (error) {
+                alert('Erreur lors de la recherche');
+            }
+        }
+        
+        // GENERATE AUTO ZONE
+        async function generateAutoZone() {
+            const duration = parseInt(document.getElementById('autoDuration').value);
+            
+            if (!navigator.geolocation) {
+                alert('La géolocalisation n\'est pas disponible');
+                return;
+            }
+            
+            navigator.geolocation.getCurrentPosition(async (position) => {
+                const lat = position.coords.latitude;
+                const lon = position.coords.longitude;
+                
+                // Create a simple circular zone (1km radius for 1h)
+                const radius = (duration / 60) * 1000; // 1km per hour
+                const circle = L.circle([lat, lon], { radius });
+                
+                drawnItems.clearLayers();
+                drawnItems.addLayer(circle);
+                map.fitBounds(circle.getBounds());
+                
+                showZoneNameForm();
+            }, (error) => {
+                alert('Impossible d\'obtenir votre position');
+            });
+        }
+        
+        // SHOW ZONE NAME FORM
+        function showZoneNameForm() {
+            document.getElementById('cityForm').classList.add('hidden');
+            document.getElementById('autoForm').classList.add('hidden');
+            document.getElementById('zoneNameForm').classList.remove('hidden');
+        }
+        
+        // SAVE ZONE AND GENERATE CIRCUIT
+        async function saveZone() {
+            const zoneName = document.getElementById('zoneName').value;
+            if (!zoneName) {
+                alert('Veuillez saisir un nom de zone');
+                return;
+            }
+            
+            document.getElementById('zoneStatus').classList.remove('hidden');
+            document.getElementById('saveZoneBtn').disabled = true;
+            
+            try {
+                // Get drawn geometry
+                const layers = drawnItems.getLayers();
+                if (layers.length === 0) {
+                    throw new Error('Aucune zone dessinée');
+                }
+                
+                const layer = layers[0];
+                const geojson = layer.toGeoJSON();
+                
+                // Get center point for point_depart
+                const center = layer.getBounds().getCenter();
+                
+                // Save zone to Supabase using GeoJSON
+                const { data: zone, error: zoneError } = await supabaseClient
+                    .from('zones')
+                    .insert({
+                        nom: zoneName,
+                        type_zone: currentMode === 'manual' ? 'manuelle' : currentMode === 'city' ? 'ville' : 'auto_1h',
+                        geometrie: `SRID=4326;${JSON.stringify(geojson.geometry)}`,
+                        created_by: currentUser.id,
+                        point_depart: `SRID=4326;POINT(${center.lng} ${center.lat})`
+                    })
+                    .select()
+                    .single();
+                
+                if (zoneError) throw zoneError;
+                
+                currentZone = zone;
+                
+                // Fetch streets from Overpass API
+                await fetchStreetsInZone(zone);
+                
+                // Start session
+                await startSession(zone);
+                
+            } catch (error) {
+                console.error(error);
+                alert('Erreur lors de la création de la zone');
+                document.getElementById('saveZoneBtn').disabled = false;
+            }
+            
+            document.getElementById('zoneStatus').classList.add('hidden');
+        }
+        
+        // FETCH STREETS FROM OVERPASS
+        async function fetchStreetsInZone(zone) {
+            // Get bounds from zone
+            const bounds = drawnItems.getLayers()[0].getBounds();
+            const bbox = `${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()}`;
+            
+            const query = `
+                [out:json][timeout:25];
+                (
+                  way["highway"~"residential|living_street|unclassified"](${bbox});
+                );
+                out geom;
+            `;
+            
+            try {
+                const response = await fetch('https://overpass-api.de/api/interpreter', {
+                    method: 'POST',
+                    body: query
+                });
+                const data = await response.json();
+                
+                // Save streets to database
+                const streets = [];
+                for (let i = 0; i < Math.min(data.elements.length, 50); i++) { // Limit to 50 streets for demo
+                    const element = data.elements[i];
+                    if (!element.geometry || element.geometry.length < 2) continue;
+                    
+                    const streetName = element.tags?.name || `Rue sans nom ${i + 1}`;
+                    
+                    // Create GeoJSON LineString
+                    const lineString = {
+                        type: 'LineString',
+                        coordinates: element.geometry.map(node => [node.lon, node.lat])
+                    };
+                    
+                    streets.push({
+                        zone_id: zone.id,
+                        nom_rue: streetName,
+                        geometrie: `SRID=4326;${JSON.stringify(lineString)}`,
+                        cote: 'tous',
+                        ordre_circuit: i + 1
+                    });
+                }
+                
+                if (streets.length > 0) {
+                    const { error } = await supabaseClient
+                        .from('rues')
+                        .insert(streets);
+                    
+                    if (error) {
+                        console.error('Error inserting streets:', error);
+                        throw error;
+                    }
+                }
+                
+                // Display streets on map
+                displayStreetsOnMap(data.elements);
+                
+            } catch (error) {
+                console.error('Error fetching streets:', error);
+            }
+        }
+        
+        // DISPLAY STREETS ON MAP
+        function displayStreetsOnMap(streets) {
+            streetsLayer.clearLayers();
+            
+            streets.forEach((street, index) => {
+                if (!street.geometry) return;
+                
+                const coords = street.geometry.map(node => [node.lat, node.lon]);
+                const polyline = L.polyline(coords, {
+                    color: '#95c122',
+                    weight: 3,
+                    opacity: 0.7
+                });
+                
+                const streetName = street.tags?.name || `Rue ${index + 1}`;
+                polyline.bindPopup(`<b>${streetName}</b>`);
+                
+                streetsLayer.addLayer(polyline);
+            });
+        }
+        
+        // START SESSION
+        async function startSession(zone) {
+            // Get streets count
+            const { data: count } = await supabase
+                .from('rues')
+                .select('*', { count: 'exact', head: true })
+                .eq('zone_id', zone.id);
+            
+            // Create session
+            const { data: data: session, error } = await supabase
+                .from('sessions_boitage')
+                .insert({
+                    zone_id: zone.id,
+                    commercial_id: currentUser.id,
+                    nb_rues_total: count,
+                    nb_rues_completees: 0
+                })
+                .select()
+                .single();
+            
+            if (error) throw error;
+            
+            currentSession = session;
+            
+            // Get streets
+            const { data: data: streets } = await supabase
+                .from('rues')
+                .select('*')
+                .eq('zone_id', zone.id)
+                .order('ordre_circuit');
+            
+            // Create progression entries
+            const progressions = streets.map(street => ({
+                session_id: session.id,
+                rue_id: street.id,
+                commercial_id: currentUser.id,
+                completee: false
+            }));
+            
+            await supabase
+                .from('progression_rues')
+                .insert(progressions);
+            
+            // Show circuit section
+            document.getElementById('modeSection').classList.add('hidden');
+            document.getElementById('zoneNameForm').classList.add('hidden');
+            document.getElementById('circuitSection').classList.remove('hidden');
+            
+            displayCircuit(streets);
+        }
+        
+        // DISPLAY CIRCUIT
+        function displayCircuit(streets) {
+            const list = document.getElementById('circuitList');
+            list.innerHTML = '';
+            
+            document.getElementById('statTotal').textContent = streets.length;
+            document.getElementById('statCompleted').textContent = 0;
+            
+            streets.forEach((street, index) => {
+                const item = document.createElement('div');
+                item.className = 'street-item';
+                item.dataset.streetId = street.id;
+                
+                item.innerHTML = `
+                    <div class="street-info">
+                        <div class="street-name">${index + 1}. ${street.nom_rue}</div>
+                        <div class="street-meta">Côté: ${street.cote}</div>
+                    </div>
+                    <button class="check-btn" onclick="markStreetComplete('${street.id}')">✓</button>
+                `;
+                
+                list.appendChild(item);
+            });
+        }
+        
+        // MARK STREET COMPLETE
+        window.markStreetComplete = async function(streetId) {
+            try {
+                const { data: error } = await supabase
+                    .from('progression_rues')
+                    .update({
+                        completee: true,
+                        date_completion: new Date().toISOString()
+                    })
+                    .eq('session_id', currentSession.id)
+                    .eq('rue_id', streetId);
+                
+                if (error) throw error;
+                
+                // Update UI
+                const item = document.querySelector(`[data-street-id="${streetId}"]`);
+                item.classList.add('completed');
+                
+                // Update stats
+                const completed = document.querySelectorAll('.street-item.completed').length;
+                const total = document.querySelectorAll('.street-item').length;
+                
+                document.getElementById('statCompleted').textContent = completed;
+                
+                const progress = Math.round((completed / total) * 100);
+                document.getElementById('progressFill').style.width = `${progress}%`;
+                document.getElementById('progressFill').textContent = `${progress}%`;
+                
+                // Update session
+                await supabase
+                    .from('sessions_boitage')
+                    .update({ nb_rues_completees: completed })
+                    .eq('id', currentSession.id);
+                
+            } catch (error) {
+                console.error(error);
+            }
+        };
+        
+        // FINISH SESSION
+        async function finishSession() {
+            if (!confirm('Terminer cette session ?')) return;
+            
+            await supabase
+                .from('sessions_boitage')
+                .update({
+                    statut: 'terminee',
+                    date_fin: new Date().toISOString()
+                })
+                .eq('id', currentSession.id);
+            
+            resetMode();
+            loadUserZones();
+        }
+        
+        // RESET MODE
+        function resetMode() {
+            currentMode = null;
+            currentZone = null;
+            currentSession = null;
+            
+            drawnItems.clearLayers();
+            streetsLayer.clearLayers();
+            dpeLayer.clearLayers();
+            
+            document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('cityForm').classList.add('hidden');
+            document.getElementById('autoForm').classList.add('hidden');
+            document.getElementById('zoneNameForm').classList.add('hidden');
+            document.getElementById('circuitSection').classList.add('hidden');
+            document.getElementById('modeSection').classList.remove('hidden');
+            document.getElementById('zonesListSection').classList.add('hidden');
+            
+            document.getElementById('zoneName').value = '';
+            document.getElementById('cityName').value = '';
+            document.getElementById('cityPostal').value = '';
+            document.getElementById('saveZoneBtn').disabled = false;
+        }
+        
+        // LOAD USER ZONES
+        async function loadUserZones() {
+            const { data: data: zones } = await supabase
+                .from('zones')
+                .select('*')
+                .eq('created_by', currentUser.id)
+                .order('created_at', { ascending: false });
+            
+            if (zones && zones.length > 0) {
+                document.getElementById('zonesListSection').classList.remove('hidden');
+                const list = document.getElementById('zonesList');
+                list.innerHTML = zones.map(zone => `
+                    <div class="street-item">
+                        <div class="street-info">
+                            <div class="street-name">${zone.nom}</div>
+                            <div class="street-meta">${new Date(zone.created_at).toLocaleDateString()}</div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+        
+        // UTILITY FUNCTIONS
+        function showError(elementId, message) {
+            const el = document.getElementById(elementId);
+            el.textContent = message;
+            el.classList.remove('hidden');
+            setTimeout(() => el.classList.add('hidden'), 5000);
+        }
+    </script>
+</body>
+</html>
